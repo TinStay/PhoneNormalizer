@@ -24,11 +24,17 @@ func main() {
 	db, err := sql.Open("postgres", psqlInfo)
 	must(err)
 
-	err = createDB(db, dbname)
+	// Create database
+	// err = createDB(db, dbname)
+	// must(err)
+
+	// Create database table
+	// must(createPhoneNumbersTable(db))
+
+	// Add phone to table
+	id, err := insertPhone(db, "1234567890")
 	must(err)
-
-	must(createPhoneNumbersTable(db))
-
+	fmt.Printf("New id:%d\n",id)
 	db.Close()
 }
 
@@ -42,6 +48,19 @@ func createPhoneNumbersTable(db *sql.DB) error{
 	_, err := db.Exec(statement)
 
 	return err
+}
+
+func insertPhone(db *sql.DB, phone string) (int, error) {
+	statement := `INSERT INTO phone_numbers(value) VALUES($1) RETURNING id`
+
+	var id int
+	// Add phone number to table
+	err := db.QueryRow(statement, phone).Scan(&id)
+	if err != nil{
+		return -1, err
+	}
+
+	return int(id), nil
 }
 
 func createDB(db *sql.DB, name string) error {
