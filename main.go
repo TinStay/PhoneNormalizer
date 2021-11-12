@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"regexp"
 
+	phonedb "github.com/TinStay/PhoneNormalizer/phonedb"
 	_ "github.com/lib/pq"
 )
 
@@ -21,8 +22,7 @@ func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s sslmode=disable", host, port, user, password)
 
 	// Open database
-	db, err := sql.Open("postgres", psqlInfo)
-	must(err)
+	must(phonedb.Reset("postgres", psqlInfo, dbname))
 
 	// Create database
 	// err = createDB(db, dbname)
@@ -180,15 +180,7 @@ func insertPhone(db *sql.DB, phone string) (int, error) {
 	return int(id), nil
 }
 
-func createDB(db *sql.DB, name string) error {
-	_, err := db.Exec("CREATE DATABASE " + name)
 
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
 
 func must(err error){
 	if err != nil{
