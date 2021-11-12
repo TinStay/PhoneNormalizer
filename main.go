@@ -32,20 +32,20 @@ func main() {
 	must(createPhoneNumbersTable(db))
 
 	// Add phone to table
-	// _, err = insertPhone(db, "1234567890")
-	// must(err)
-	// _, err = insertPhone(db, "123 456 7891")
-	// must(err)
-	// _, err = insertPhone(db, "(123) 456 7892")
-	// must(err)
-	// _, err = insertPhone(db, "(123) 456-7893")
-	// must(err)
-	// _, err = insertPhone(db, "123-456-7890")
-	// must(err)
-	// _, err = insertPhone(db, "1234567892")
-	// must(err)
-	// _, err = insertPhone(db, "(123)456-7892")
-	// must(err)
+	_, err = insertPhone(db, "1234567890")
+	must(err)
+	_, err = insertPhone(db, "123 456 7891")
+	must(err)
+	_, err = insertPhone(db, "(123) 456 7892")
+	must(err)
+	_, err = insertPhone(db, "(123) 456-7893")
+	must(err)
+	_, err = insertPhone(db, "123-456-7890")
+	must(err)
+	_, err = insertPhone(db, "1234567892")
+	must(err)
+	_, err = insertPhone(db, "(123)456-7892")
+	must(err)
 
 	// number, err := getPhone(db, id)
 	// must(err)
@@ -68,7 +68,7 @@ func main() {
 			if existing != nil {
 				// delete number
 				must(deletePhone(db, p.id))
-			}else {
+			} else {
 				// update number
 				p.number = number
 				must(updatePhone(db, p))
@@ -102,7 +102,7 @@ func deletePhone(db *sql.DB, id int) error {
 func findPhone(db *sql.DB, number string)(*phone, error){
 	var p phone
 
-	row := db.QueryRow("Select value FROM phone_numbers WHERE id=$1", number)
+	row := db.QueryRow("Select * FROM phone_numbers WHERE value=$1", number)
 	err := row.Scan(&p.id, &p.number) 
 
 	if err != nil {
