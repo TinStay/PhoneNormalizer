@@ -29,60 +29,49 @@ func main() {
 	// Migrate database
 	must(phonedb.Migrate("postgres", psqlInfo))
 
-	db, err := sql.Open("postgres", psqlInfo)
+	db, err := phonedb.Open("postgres", psqlInfo)
 	must(err)
 
 	defer db.Close()
 
-	// Add phone to table
-	_, err = insertPhone(db, "1234567890")
-	must(err)
-	_, err = insertPhone(db, "123 456 7891")
-	must(err)
-	_, err = insertPhone(db, "(123) 456 7892")
-	must(err)
-	_, err = insertPhone(db, "(123) 456-7893")
-	must(err)
-	_, err = insertPhone(db, "123-456-7890")
-	must(err)
-	_, err = insertPhone(db, "1234567892")
-	must(err)
-	_, err = insertPhone(db, "(123)456-7892")
-	must(err)
-
-	// number, err := getPhone(db, id)
-	// must(err)
-	// fmt.Println("Number is: ", number)
-
-	phones, err := getAllNumbers(db)
-	must(err)
-
-	for _, p := range phones{
-		fmt.Printf("Working on... %v\n", p.number)
-		// Format number
-		number := normalize(p.number)
-
-		if number != p.number {
-			fmt.Println("Updating or removing...", number)
-			// Find current number
-			existing, err := findPhone(db, number)
-			must(err)
-
-			if existing != nil {
-				// delete number
-				must(deletePhone(db, p.id))
-			} else {
-				// update number
-				p.number = number
-				must(updatePhone(db, p))
-			}
-		} else {
-			fmt.Println("No changes required")
-		}
+	// Add phone numbers to table
+	if err := db.Seed(); err != nil{
+		panic(err)
 	}
 
-	// Close db
-	db.Close()
+	// // number, err := getPhone(db, id)
+	// // must(err)
+	// // fmt.Println("Number is: ", number)
+
+	// phones, err := getAllNumbers(db)
+	// must(err)
+
+	// for _, p := range phones{
+	// 	fmt.Printf("Working on... %v\n", p.number)
+	// 	// Format number
+	// 	number := normalize(p.number)
+
+	// 	if number != p.number {
+	// 		fmt.Println("Updating or removing...", number)
+	// 		// Find current number
+	// 		existing, err := findPhone(db, number)
+	// 		must(err)
+
+	// 		if existing != nil {
+	// 			// delete number
+	// 			must(deletePhone(db, p.id))
+	// 		} else {
+	// 			// update number
+	// 			p.number = number
+	// 			must(updatePhone(db, p))
+	// 		}
+	// 	} else {
+	// 		fmt.Println("No changes required")
+	// 	}
+	// }
+
+	// // Close db
+	// db.Close()
 }
 
 type phone struct{
@@ -157,20 +146,6 @@ func getPhone(db *sql.DB, id int)(string, error){
 
 	return number, nil
 }
-
-func insertPhone(db *sql.DB, phone string) (int, error) {
-	statement := `INSERT INTO phone_numbers(value) VALUES($1) RETURNING id`
-
-	var id int
-	// Add phone number to table
-	err := db.QueryRow(statement, phone).Scan(&id)
-	if err != nil{
-		return -1, err
-	}
-
-	return int(id), nil
-}
-
 
 
 func must(err error){
