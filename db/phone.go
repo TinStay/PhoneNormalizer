@@ -1,6 +1,33 @@
-package phonedb
+package db
 
 import "database/sql"
+
+
+func Migrate(driverName, dataSource string) error {
+	db, err := sql.Open(driverName, dataSource)
+	if err != nil {
+		return err
+	}
+	
+	err = createPhoneNumbersTable(db)
+
+	if err != nil{
+		return err
+	}
+		return db.Close()
+}
+
+func createPhoneNumbersTable(db *sql.DB) error {
+	statement := `
+	CREATE TABLE IF NOT EXISTS phone_numbers (
+		ID SERIAL,
+		value VARCHAR(255)
+	)`
+
+	_, err := db.Exec(statement)
+
+	return err
+}
 
 func Reset(driverName, dataSource, dbName string) error {
 	db, err := sql.Open(driverName, dataSource)

@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"regexp"
 
-	phonedb "github.com/TinStay/PhoneNormalizer/phonedb"
+	// phonedb "github.com/TinStay/PhoneNormalizer/db"
+	phonedb "github.com/Basics/src/github.com/TinStay/PhoneNormalizer/db"
+
 	_ "github.com/lib/pq"
 )
 
@@ -24,12 +26,13 @@ func main() {
 	// Open database
 	must(phonedb.Reset("postgres", psqlInfo, dbname))
 
-	// Create database
-	// err = createDB(db, dbname)
-	// must(err)
+	// Migrate database
+	must(phonedb.Migrate("postgres", psqlInfo))
 
-	// Create database table
-	must(createPhoneNumbersTable(db))
+	db, err := sql.Open("postgres", psqlInfo)
+	must(err)
+
+	defer db.Close()
 
 	// Add phone to table
 	_, err = insertPhone(db, "1234567890")
@@ -153,18 +156,6 @@ func getPhone(db *sql.DB, id int)(string, error){
 	}
 
 	return number, nil
-}
-
-func createPhoneNumbersTable(db *sql.DB) error {
-	statement := `
-	CREATE TABLE IF NOT EXISTS phone_numbers (
-		ID SERIAL,
-		value VARCHAR(255)
-	)`
-
-	_, err := db.Exec(statement)
-
-	return err
 }
 
 func insertPhone(db *sql.DB, phone string) (int, error) {
