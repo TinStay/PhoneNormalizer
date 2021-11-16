@@ -1,17 +1,21 @@
 package db
 
-import "database/sql"
+import (
+	"database/sql"
 
-type Phone struct{
-	ID int
+	_ "github.com/lib/pq"
+)
+
+type Phone struct {
+	ID     int
 	Number string
 }
 
-func getPhone(db *sql.DB, id int)(string, error){
+func getPhone(db *sql.DB, id int) (string, error) {
 	var number string
 
 	row := db.QueryRow("Select value FROM phone_numbers WHERE id=$1", id)
-	err := row.Scan(&number) 
+	err := row.Scan(&number)
 
 	if err != nil {
 		return "", err
@@ -20,7 +24,7 @@ func getPhone(db *sql.DB, id int)(string, error){
 	return number, nil
 }
 
-func (db *DB) GetAllPhones()([]Phone, error){
+func (db *DB) GetAllPhones() ([]Phone, error) {
 	rows, err := db.db.Query("SELECT id, value FROM phone_numbers")
 	if err != nil {
 		return nil, err
@@ -31,7 +35,7 @@ func (db *DB) GetAllPhones()([]Phone, error){
 	var ret []Phone
 
 	// Loop through all rows
-	for rows.Next(){
+	for rows.Next() {
 		var p Phone
 		if err := rows.Scan(&p.ID, &p.Number); err != nil {
 			return nil, err
@@ -46,10 +50,40 @@ func (db *DB) GetAllPhones()([]Phone, error){
 	return ret, nil
 }
 
+func (db *DB) FindPhone(number string) (*Phone, error) {
+	var p Phone
+
+	row := db.db.QueryRow("Select * FROM phone_numbers WHERE value=$1", number)
+	err := row.Scan(&p.ID, &p.Number)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+
+	return &p, nil
+}
+
+func (db *DB) DeletePhone(id int) error {
+	statement := `DELETE FROM phone_numbers WHERE id=$1`
+	_, err := db.db.Exec(statement, id)
+	return err
+}
+
+
+func (db *DB) UpdatePhone(p *Phone) error {
+	statement := `UPDATE phone_numbers SET value=$2 WHERE id=$1`
+	_, err := db.db.Exec(statement, p.ID, p.Number)
+	return err
+}
+
 func Open(driverName, dataSource string) (*DB, error) {
 	db, err := sql.Open(driverName, dataSource)
 	if err != nil {
-		return nil, err 
+		return nil, err
 	}
 
 	return &DB{db}, nil
@@ -63,7 +97,6 @@ func (db *DB) Close() error {
 	return db.db.Close()
 }
 
-
 func (db *DB) Seed() error {
 	data := []string{
 		"1234567890",
@@ -76,11 +109,11 @@ func (db *DB) Seed() error {
 	}
 
 	for _, number := range data {
-		if _, err := insertPhone(db.db, number); err != nil{
+		if _, err := insertPhone(db.db, number); err != nil {
 			return err
 		}
 	}
-	
+
 	return nil
 }
 
@@ -90,7 +123,7 @@ func insertPhone(db *sql.DB, phone string) (int, error) {
 	var id int
 	// Add phone number to table
 	err := db.QueryRow(statement, phone).Scan(&id)
-	if err != nil{
+	if err != nil {
 		return -1, err
 	}
 
@@ -105,10 +138,10 @@ func Migrate(driverName, dataSource string) error {
 
 	err = createPhoneNumbersTable(db)
 
-	if err != nil{
+	if err != nil {
 		return err
 	}
-		return db.Close()
+	return db.Close()
 }
 
 func createPhoneNumbersTable(db *sql.DB) error {
@@ -151,4 +184,3 @@ func resetDB(db *sql.DB, name string) error {
 	}
 	return createDB(db, name)
 }
-
