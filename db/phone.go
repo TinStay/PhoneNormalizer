@@ -2,6 +2,49 @@ package db
 
 import "database/sql"
 
+type Phone struct{
+	ID int
+	Number string
+}
+
+func getPhone(db *sql.DB, id int)(string, error){
+	var number string
+
+	row := db.QueryRow("Select value FROM phone_numbers WHERE id=$1", id)
+	err := row.Scan(&number) 
+
+	if err != nil {
+		return "", err
+	}
+
+	return number, nil
+}
+
+func (db *DB) GetAllPhones()([]Phone, error){
+	rows, err := db.db.Query("SELECT id, value FROM phone_numbers")
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var ret []Phone
+
+	// Loop through all rows
+	for rows.Next(){
+		var p Phone
+		if err := rows.Scan(&p.ID, &p.Number); err != nil {
+			return nil, err
+		}
+		ret = append(ret, p)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return ret, nil
+}
 
 func Open(driverName, dataSource string) (*DB, error) {
 	db, err := sql.Open(driverName, dataSource)
@@ -108,3 +151,4 @@ func resetDB(db *sql.DB, name string) error {
 	}
 	return createDB(db, name)
 }
+

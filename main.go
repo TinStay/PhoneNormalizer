@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"database/sql"
 	"fmt"
 	"regexp"
 
@@ -39,113 +38,66 @@ func main() {
 		panic(err)
 	}
 
-	// // number, err := getPhone(db, id)
-	// // must(err)
-	// // fmt.Println("Number is: ", number)
+	phones, err := db.GetAllPhones()
+	must(err)
 
-	// phones, err := getAllNumbers(db)
-	// must(err)
+	for _, p := range phones{
+		fmt.Printf("Working on... %v\n", p.Number)
+		// Format number
+		number := normalize(p.Number)
 
-	// for _, p := range phones{
-	// 	fmt.Printf("Working on... %v\n", p.number)
-	// 	// Format number
-	// 	number := normalize(p.number)
+		if number != p.Number {
+			fmt.Println("Updating or removing...", number)
+			// // Find current number
+			// existing, err := findPhone(db, number)
+			// must(err)
 
-	// 	if number != p.number {
-	// 		fmt.Println("Updating or removing...", number)
-	// 		// Find current number
-	// 		existing, err := findPhone(db, number)
-	// 		must(err)
-
-	// 		if existing != nil {
-	// 			// delete number
-	// 			must(deletePhone(db, p.id))
-	// 		} else {
-	// 			// update number
-	// 			p.number = number
-	// 			must(updatePhone(db, p))
-	// 		}
-	// 	} else {
-	// 		fmt.Println("No changes required")
-	// 	}
-	// }
+			// if existing != nil {
+			// 	// delete number
+			// 	must(deletePhone(db, p.ID))
+			// } else {
+			// 	// update number
+			// 	p.number = number
+			// 	must(updatePhone(db, p))
+			// }
+		} else {
+			fmt.Println("No changes required")
+		}
+	}
 
 	// // Close db
 	// db.Close()
 }
 
-type phone struct{
-	id int
-	number string
-}
 
-func updatePhone(db *sql.DB, p phone) error {
-	statement := `UPDATE phone_numbers SET value=$2 WHERE id=$1`
-	_, err := db.Exec(statement, p.id, p.number)
-	return err
-}
+// func updatePhone(db *sql.DB, p phone) error {
+// 	statement := `UPDATE phone_numbers SET value=$2 WHERE id=$1`
+// 	_, err := db.Exec(statement, p.id, p.number)
+// 	return err
+// }
 
-func deletePhone(db *sql.DB, id int) error {
-	statement := `DELETE FROM phone_numbers WHERE id=$1`
-	_, err := db.Exec(statement, id)
-	return err
-}
+// func deletePhone(db *sql.DB, id int) error {
+// 	statement := `DELETE FROM phone_numbers WHERE id=$1`
+// 	_, err := db.Exec(statement, id)
+// 	return err
+// }
 
-func findPhone(db *sql.DB, number string)(*phone, error){
-	var p phone
+// func findPhone(db *sql.DB, number string)(*phone, error){
+// 	var p phone
 
-	row := db.QueryRow("Select * FROM phone_numbers WHERE value=$1", number)
-	err := row.Scan(&p.id, &p.number) 
+// 	row := db.QueryRow("Select * FROM phone_numbers WHERE value=$1", number)
+// 	err := row.Scan(&p.id, &p.number) 
 
-	if err != nil {
-		if err == sql.ErrNoRows{
-			return nil, nil
-		}else {
-			return nil, err
-		}
-	}
+// 	if err != nil {
+// 		if err == sql.ErrNoRows{
+// 			return nil, nil
+// 		}else {
+// 			return nil, err
+// 		}
+// 	}
 
-	return &p, nil
-}
-
-func getAllNumbers(db *sql.DB)([]phone, error){
-	rows, err := db.Query("SELECT id, value FROM phone_numbers")
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var ret []phone
-
-	// Loop through all rows
-	for rows.Next(){
-		var p phone
-		if err := rows.Scan(&p.id,&p.number,); err != nil {
-			return nil, err
-		}
-		ret = append(ret, p)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return ret, nil
-}
-
-func getPhone(db *sql.DB, id int)(string, error){
-	var number string
-
-	row := db.QueryRow("Select value FROM phone_numbers WHERE id=$1", id)
-	err := row.Scan(&number) 
-
-	if err != nil {
-		return "", err
-	}
-
-	return number, nil
-}
+// 	return &p, nil
+// }
 
 
 func must(err error){
